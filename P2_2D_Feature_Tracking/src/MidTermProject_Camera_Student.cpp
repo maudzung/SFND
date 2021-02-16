@@ -43,12 +43,13 @@ int main(int argc, const char *argv[])
     double totalTime = 0.;
     size_t totalKeypoints = 0;
     size_t totalMatches = 0;
-    // Options: SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-    string detectorType = "SHITOMASI";
-
-    string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-    string binHogDescriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-
+    string detectorType(argv[1]); // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+    string descriptorType(argv[2]); // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+    string binHogDescriptorType(argv[3]); // DES_BINARY, DES_HOG
+    string matcherType(argv[4]);        // MAT_BF, MAT_FLANN
+    string selectorType(argv[5]);       // SEL_NN, SEL_KNN
+    string printed_arg(argv[6]);
+    bool is_printed_heading = printed_arg.compare("true") == 0;
     /* MAIN LOOP OVER ALL IMAGES */
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
@@ -163,8 +164,6 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -204,10 +203,11 @@ int main(int argc, const char *argv[])
         totalTime += timeDetector + timeDescriptor;
 
     } // eof loop over all images
-    
-    std::cout << "| Detector |" << "Descriptor |" << "# Keypoints |" << "# Matches |" << "Time (ms) |" << "# Matches/ms) |" << "\n";
-    std::cout << "|:---:|:----:|:-----:|:-----:|:-----:|\n";
-    std::cout << "| " << detectorType << " |" << descriptorType << " |" << totalKeypoints << " |" << totalMatches << " |" << 1000 * totalTime << " |" << totalMatches / (1000 * totalTime) << " |"<< "\n";
+    if (!is_printed_heading) {
+        std::cout << "\n\n| Detector |" << "Descriptor | " << "binHogDescriptorType | " << "matcherType | " << "selectorType | " << "# Keypoints |" << "# Matches |" << "Time (ms) |" << "# Matches/ms) |" << "\n";
+        std::cout << "|:---:|:----:|:----:|:----:|:----:|:----:|:-----:|:-----:|:-----:|\n"; 
+    }
+    std::cout << "| " << detectorType << " |" << descriptorType << " |" << binHogDescriptorType << " |" << matcherType << " |" << selectorType << " |" << totalKeypoints << " |" << totalMatches << " |" << 1000 * totalTime << " |" << totalMatches / (1000 * totalTime) << " |"<< "\n";
 
     return 0;
 }
