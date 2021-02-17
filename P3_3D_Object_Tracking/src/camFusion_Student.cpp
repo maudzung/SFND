@@ -159,5 +159,50 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    // https://docs.opencv.org/4.1.0/db/d39/classcv_1_1DescriptorMatcher.html#a0f046f47b68ec7074391e1e85c750cba
+    // https://docs.opencv.org/4.1.0/d4/de0/classcv_1_1DMatch.html
+
+    int prev_num_boxes = prevFrame.boundingBoxes.size();
+    int curr_num_boxes = currFrame.boundingBoxes.size();
+    int counts[prev_num_boxes][curr_num_boxes] = {};
+    
+    for (auto match : matches)     
+    {
+        cv::KeyPoint query = prevFrame.keypoints[match.queryIdx];
+        cv::KeyPoint train = currFrame.keypoints[match.trainIdx];
+        bool query_found = false, train_found = false;
+    	int query_id, train_id;
+
+        for (int i = 0; i < prevFrame.boundingBoxes.size(); i++) {
+    		if (prevFrame.boundingBoxes[i].roi.contains(cv::Point(query.pt.x, query.pt.y))) {
+    			query_found = true;
+    			query_id = i;
+    			break;
+    		}
+    	}
+        for (int i = 0; i < currFrame.boundingBoxes.size(); i++) {
+    		if (currFrame.boundingBoxes[i].roi.contains(cv::Point(train.pt.x, train.pt.y))) {
+    			train_found = true;
+    			train_id = i;
+    			break;
+    		}
+    	}
+        if (query_found && train_found) {
+            counts[query_id][train_id] += 1;
+    	}
+    }
+
+    for (int i = 0; i < prev_num_boxes; i++)
+    {  
+        int max_count = 0;
+        int max_id = -1;
+        for (int j = 0; j < curr_num_boxes; j++) {
+            if (counts[i][j] > max_count)
+            {  
+                max_count = counts[i][j];
+                max_id = j;
+            }
+        }
+        bbBestMatches[i] = max_id;
+    } 
 }
