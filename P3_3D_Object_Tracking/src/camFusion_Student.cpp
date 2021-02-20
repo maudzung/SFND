@@ -153,23 +153,16 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // Consider the position of the infront vehicle as the average positions of LiDAR points
-    double d0 = 0., d1 = 0.;
+    // find closest distance to Lidar points within ego lane
+    double minXPrev = 1e9, minXCurr = 1e9;
     for (auto prev_point: lidarPointsPrev) {
-        d0 += prev_point.x / lidarPointsPrev.size();
+        minXPrev = std::min(minXPrev, prev_point.x);
     }
     for (auto prev_point: lidarPointsPrev) {
-        d1 += prev_point.x / lidarPointsPrev.size();
+        minXCurr = std::min(minXCurr, prev_point.x);
     }
-    double v0 = (d0 - d1) / (1. / frameRate);
-    if (v0 <= 0.) 
-    {
-        TTC = NAN;
-    }
-    else 
-    {
-        TTC = d1 / v0;
-    }
+    
+    TTC = minXCurr * (1. / frameRate) / (minXPrev - minXCurr);
 }
 
 
