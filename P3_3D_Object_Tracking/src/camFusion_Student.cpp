@@ -229,23 +229,48 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // find closest distance to Lidar points within ego lane
-    double minXPrev = 1e9, minXCurr = 1e9;
-    for (auto prev_point: lidarPointsPrev) {
-        minXPrev = std::min(minXPrev, prev_point.x);
-    }
-    for (auto prev_point: lidarPointsCurr) {
-        minXCurr = std::min(minXCurr, prev_point.x);
-    }
-    
-    if (minXPrev <= minXCurr) 
+    bool useMin = false; // if false, useAverage
+    if (useMin) 
     {
-        TTC = NAN;
+        // find closest distance to Lidar points within ego lane
+        double minXPrev = 1e9, minXCurr = 1e9;
+        for (auto prev_point: lidarPointsPrev) {
+            minXPrev = std::min(minXPrev, prev_point.x);
+        }
+        for (auto prev_point: lidarPointsCurr) {
+            minXCurr = std::min(minXCurr, prev_point.x);
+        }
+        
+        if (minXPrev <= minXCurr) 
+        {
+            TTC = NAN;
+        }
+        else
+        {
+            TTC = minXCurr * (1. / frameRate) / (minXPrev - minXCurr);
+        }
     }
     else
-    {
-        TTC = minXCurr * (1. / frameRate) / (minXPrev - minXCurr);
+    {   
+        auto lambda = [&](LidarPoint point){return point.x;};
+        double avgXPrev = 0., avgXCurr = 0.;
+        for (LidarPoint point : lidarPointsPrev) {
+            avgXPrev += point.x / lidarPointsPrev.size();
+        }
+        for (LidarPoint point : lidarPointsCurr) {
+            avgXCurr += point.x / lidarPointsCurr.size();
+        }
+
+        if (avgXPrev <= avgXCurr) 
+        {
+            TTC = NAN;
+        }
+        else
+        {
+            TTC = avgXCurr * (1. / frameRate) / (avgXPrev - avgXCurr);
+        }
     }
+    
 }
 
 
