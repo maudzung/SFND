@@ -99,3 +99,14 @@ sudo make install
 5. Finally, I conduct various tests with the framework to identify the most suitable detector/descriptor combination for TTC estimation and also to search for problems that can lead to faulty measurements by the camera or Lidar sensor.
 
 I select the `FAST` keypoints detector and `ORB` keypoints descriptor as default because the combination can get the best stable performance compared to other combinations. For more information, please take a look at `/docs/` folder where I saved the output of the top-3 best detector/descriptor combinations.
+
+Some result examples:
+<img src="docs/FAST_ORB/0002.png"/>
+
+<img src="docs/FAST_ORB/0003.png"/>
+
+<img src="docs/FAST_ORB/0004.png"/>
+
+<img src="docs/FAST_ORB/0005.png"/>
+
+<img src="docs/FAST_ORB/0006.png"/>
