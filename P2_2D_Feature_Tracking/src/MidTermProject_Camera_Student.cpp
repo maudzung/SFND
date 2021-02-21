@@ -114,13 +114,15 @@ int main(int argc, const char *argv[])
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {   
-            for (auto it = keypoints.begin(); it < keypoints.end(); it++)
+            vector<cv::KeyPoint> retKeypoints;
+            for (cv::KeyPoint kpt : keypoints)
             {
-                if (!vehicleRect.contains(it->pt))
+                if (vehicleRect.contains(kpt.pt))
                 {
-                    keypoints.erase(it);
+                    retKeypoints.push_back(kpt);
                 }
             }
+            keypoints = retKeypoints;
         }
 
         //// EOF STUDENT ASSIGNMENT
