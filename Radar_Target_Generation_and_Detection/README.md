@@ -40,12 +40,28 @@ The project layout is described as the below figure
 
     The steps to solve the task:
     - Determine the number of Training cells and the number of guard cells for each dimension.
+
+    ```
+    Tr = 10;
+    Td = 8;
+
+    Gr = 4;
+    Gd = 4;
+
+    offset = 1.3; % in dB
+    ```
+
     - Slide the cell under test across the complete matrix. Make sure the CUT has margin for Training and Guard cells from the edges.
     - For every iteration sum the signal level within all the training cells. To sum convert the value from logarithmic to linear using db2pow function.
     - Average the summed values for all of the training cells used. After averaging convert it back to logarithmic using pow2db.
     - Further add the offset to it to determine the threshold.
     - Next, compare the signal under CUT against this threshold.
     - If the CUT level > threshold assign it a value of 1, else equate it to 0.
+    - Steps taken to suppress the non-thresholded cells at the edges:
+    ```
+    RDM(union(1:(Tr+Gr),end-(Tr+Gr-1):end),:) = 0;  % Rows
+    RDM(:,union(1:(Td+Gd),end-(Td+Gd-1):end)) = 0;  % Columns
+    ```
 
     The code implementation of this part is from line **#161** to line **#251**.
 
