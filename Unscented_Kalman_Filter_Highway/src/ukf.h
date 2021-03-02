@@ -47,8 +47,6 @@ class UKF {
 
   void PredictMeanAndCovariance();
 
-  void UpdateMeasurement(MeasurementPackage& meas_package, Eigen::MatrixXd& Zsig, int n_z);
-
   inline void NormalizeAngle(double& angle, double max_angle=M_PI, double min_angle=-M_PI) {
     while (angle > max_angle) {
       angle -= 2.0 * M_PI;
