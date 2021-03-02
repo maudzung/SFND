@@ -58,7 +58,7 @@ UKF::UKF() {
 
   weights_ = VectorXd(n_sig_); // Weights of sigma points
   weights_(0) = 1 / (1 + n_aug_ / lambda_);
-  for (int i = 1; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 1; i < n_sig_; ++i) {
     weights_(i) = 0.5 / (n_aug_ + lambda_);
   }
 
@@ -104,8 +104,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    * Prediction
    ***********************************************************/
 
-  float delta_t = static_cast<double>(meas_package.timestamp_ - prev_timestamp_);
-  Prediction(delta_t);
+  double delta_t = static_cast<double>(meas_package.timestamp_ - prev_timestamp_) / 1e6;
+  if (delta_t > 0.0001) {
+    Prediction(delta_t);
+  }
+
+  prev_timestamp_ = meas_package.timestamp_;
 
   if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
     UpdateLidar(meas_package);
@@ -141,9 +145,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   int n_z = 3;
 
   // Sigma points matrix in measurement space
-  Eigen::MatrixXd Zsig(n_z, 2 * n_aug_ + 1);
+  Eigen::MatrixXd Zsig(n_z, n_sig_);
 
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i < n_sig_; ++i) {
     double p_x = Xsig_pred_(0, i);
     double p_y = Xsig_pred_(1, i);
     double v = Xsig_pred_(2, i);
@@ -179,7 +183,7 @@ void UKF::AugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug) {
 }
 
 void UKF::SigmaPointPrediction(const Eigen::MatrixXd& Xsig_aug, double delta_t) {
-  for (int i = 0; i< 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i< n_sig_; ++i) {
     // extract values for better readability
     double p_x = Xsig_aug(0,i);
     double p_y = Xsig_aug(1,i);
@@ -224,12 +228,12 @@ void UKF::SigmaPointPrediction(const Eigen::MatrixXd& Xsig_aug, double delta_t) 
 
 void UKF::PredictMeanAndCovariance() {
   Eigen::VectorXd x = Eigen::VectorXd::Zero(n_x_);
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i < n_sig_; ++i) {
     x += weights_(i) * Xsig_pred_.col(i);
   }
 
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(n_x_, n_x_);
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {  // iterate over sigma points
+  for (int i = 0; i < n_sig_; ++i) {  // iterate over sigma points
     Eigen::VectorXd x_diff = Xsig_pred_.col(i) - x;
     NormalizeAngle(x_diff(3));
     P += weights_(i) * x_diff * x_diff.transpose();
@@ -241,13 +245,13 @@ void UKF::PredictMeanAndCovariance() {
 
 void UKF::UpdateMeasurement(MeasurementPackage& meas_package, Eigen::MatrixXd& Zsig, int n_z) {
   Eigen::VectorXd z_pred = Eigen::VectorXd::Zero(n_z);  // Mean predicted measurement
-  Eigen::MatrixXd S = Eigen::VectorXd::Zero(n_z, n_z);  // Measurement covariance matrix
+  Eigen::MatrixXd S = Eigen::MatrixXd::Zero(n_z, n_z);  // Measurement covariance matrix
 
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i < n_sig_; ++i) {
     z_pred += weights_(i) * Zsig.col(i);
   }
 
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i < n_sig_; ++i) {
     Eigen::VectorXd z_diff = Zsig.col(i) - z_pred;
 
     if(meas_package.sensor_type_ == MeasurementPackage::RADAR) {
@@ -269,7 +273,7 @@ void UKF::UpdateMeasurement(MeasurementPackage& meas_package, Eigen::MatrixXd& Z
   S = S + R;
 
   Eigen::MatrixXd Tc = Eigen::MatrixXd::Zero(n_x_, n_z);
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {
+  for (int i = 0; i < n_sig_; ++i) {
     // residual
     Eigen::VectorXd z_diff = Zsig.col(i) - z_pred;
 
