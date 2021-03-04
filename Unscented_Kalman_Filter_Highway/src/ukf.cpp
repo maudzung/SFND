@@ -90,12 +90,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   }
 
   if (!is_initialized_) {
-    if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
       float ro = static_cast<float>(meas_package.raw_measurements_(0));
       float phi = static_cast<float>(meas_package.raw_measurements_(1));
       x_ << ro * std::cos(phi), ro * std::sin(phi), 0., 0., 0.;
     }
-    else if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       x_ << meas_package.raw_measurements_(0), meas_package.raw_measurements_(1), 0., 0., 0.;
     }
 
@@ -108,10 +108,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    * Prediction
    ***********************************************************/
 
-  double delta_t = static_cast<double>(meas_package.timestamp_ - prev_timestamp_) / 1e6;
-  if (delta_t > 0.0001) {
-    Prediction(delta_t);
-  }
+  double delta_t = static_cast<double>(meas_package.timestamp_ - prev_timestamp_) * 1e-6;
+  Prediction(delta_t);
 
   prev_timestamp_ = meas_package.timestamp_;
 
@@ -128,7 +126,7 @@ void UKF::Prediction(double delta_t) {
    * Predict sigma points, the state, and the state covariance matrix.
    */
   Eigen::MatrixXd Xsig_aug(n_aug_, n_sig_);
-  AugmentedSigmaPoints(Xsig_aug);
+  GenerateAugmentedSigmaPoints(Xsig_aug);
   SigmaPointPrediction(Xsig_aug, delta_t);
   PredictMeanAndCovariance();
 }
@@ -240,7 +238,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   P_ -= K * S * K.transpose();
 }
 
-void UKF::AugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug) {
+void UKF::GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug) {
   Eigen::VectorXd x_aug = Eigen::VectorXd::Zero(n_aug_);
   Eigen::MatrixXd P_aug = Eigen::MatrixXd::Zero(n_aug_, n_aug_);
 
