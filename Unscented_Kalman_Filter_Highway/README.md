@@ -35,8 +35,9 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
-$ ./ukf_highway
+$ ./ukf_highway > ../check_consistance/nis_data.txt
 ```
+
 
 ## Code Style
 
@@ -52,6 +53,7 @@ $ ./ukf_highway
 
     ![generate_sigma_points](./docs/generate_sigma_points.png)
 
+    The part is implemented in `GenerateAugmentedSigmaPoints()` method in the file `src/ukf.cpp` (from line **#241** to line **#262**).
 
 
     1.2. Predict Sigma Points
@@ -60,17 +62,57 @@ $ ./ukf_highway
 
     ![process_model](./docs/process_model.png)
 
+    The part is implemented in `SigmaPointPrediction()` method in the file `src/ukf.cpp` (from line **#264** to line **#306**).
 
     1.3. Predict Mean and Covariance
 
     ![predict_mean_covariance](./docs/predict_mean_covariance.png)
 
+    The part is implemented in `PredictMeanAndCovariance()` method in the file `src/ukf.cpp` (from line **#308** to line **#322**).
+
 2. Update
+
+    This part consists of 2 sub-tasks: Predict Measurement and Update State.
+    The implementation is a bit different between LiDAR and RADAR. Hence, I have used 2 functions: `UpdateLidar()` (from line **#134** to line **#177**) and `UpdateRadar()` (from line **#179** to line **#239**) for the two kind of sensors.
 
     2.1. Predict Measurement
 
     ![predict_measurement](./docs/predict_measurement.png)
 
+    
+
     2.2. Update State
 
     ![update_state](./docs/update_state.png)
+
+3. Consistance check using Normalized innovation Squared (NIS)
+
+  ![nis](./docs/nis.png)
+
+  ![nis_stats](./docs/nis_stats.png)
+
+  To check whether the noise values are reasonable, we can use the Normalized Innovation Squared (NIS) statistic.
+  A good way to check this is to plot the NIS statistic for both RADAR and LASER measurements along with the corresponding 95% confidence threshold:
+  - **RADAR:** 7.815 for 3 degrees of freedom (DOF)
+  - **LASER:** 5.991 for 2 DOF.  
+  
+  If our noise is consistent, we should see roughly 95% of NIS values computed from measurements fall below the confidence threshold.
+
+  **How to tune the noise values:**
+
+  - If much more than 5% of the NIS values computed from measurements exceed the threshold, it means that our measurements are actually being drawn from a distribution with a greater variance than we assumed.  
+  Hence, we have underestimated the process noise, and should increase it.  
+
+  - If all of the NIS values computed from measurements is below the threshold, it means that our measurements are being drawn from a distribution with smaller variance than we assumed.  Hence, we have overestimated our process noise, and should decrease it.
+
+
+  To check filter consistance with NIS, please execute:
+
+  ```shell
+  $ cd check_consistance
+  $ python3 check_consistance_nis.py
+  ```
+
+  My results with `std_a_ = 6. m/s^2` and `std_yawdd_ = 1.5 rad/s^2`:
+
+  ![nis_consistance](./check_consistance/nis_check_consistance.png)

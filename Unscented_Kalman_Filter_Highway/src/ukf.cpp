@@ -17,10 +17,10 @@ UKF::UKF() {
   use_radar_ = true;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 5.5;
+  std_a_ = 6.;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 1.;
+  std_yawdd_ = 1.5;
   
   /**
    * DO NOT MODIFY measurement noise values below.
